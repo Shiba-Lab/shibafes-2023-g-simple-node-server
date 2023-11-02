@@ -6,12 +6,14 @@ const app = express();
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 
+const result = { type: "setup", id: "00000110", role: "canvas" };
+
 wss.on("connection", (ws) => {
   console.log("Client connected");
 
   ws.on("message", (message) => {
     console.log(`Received: ${message}`);
-    ws.send(`Echo: ${message}`);
+    ws.send(JSON.stringify({ message: "Hello from server" }));
   });
 });
 
