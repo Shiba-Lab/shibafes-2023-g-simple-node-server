@@ -2,7 +2,7 @@ import express from "express";
 import { Server } from "ws";
 import path from "path";
 
-const PORT: number = Number(process.env.PORT) || 8765;
+const PORT: number = 8765;
 const INDEX: string = "/index.html";
 
 const server = express()
@@ -11,9 +11,20 @@ const server = express()
 
 const wss = new Server({ server });
 
+// wss.on("connection", (ws) => {
+//   console.log("Client connected");
+//   ws.on("close", () => console.log("Client disconnected"));
+// });
+
+const result = { type: "setup", id: "00000110", role: "canvas" };
+
 wss.on("connection", (ws) => {
   console.log("Client connected");
-  ws.on("close", () => console.log("Client disconnected"));
+
+  ws.on("message", (message) => {
+    console.log(`Received: ${message}`);
+    ws.send(JSON.stringify({ message: "Hello from server" }));
+  });
 });
 
 setInterval(() => {
