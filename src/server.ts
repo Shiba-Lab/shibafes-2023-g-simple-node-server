@@ -2,7 +2,10 @@ import express from "express";
 import { Server as WebSocketServer } from "ws";
 import http from "http";
 
-const app = express();
+const app = (req: any, res: any) => {
+  res.writeHead(200, { "Content-Type": "text/plain" });
+  res.end("WebSocket server running");
+};
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 
