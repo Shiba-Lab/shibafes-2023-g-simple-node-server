@@ -1,26 +1,23 @@
 import express from "express";
-import { Server as WebSocketServer } from "ws";
-import http from "http";
+import { Server } from "ws";
+import path from "path";
 
-const app = (req: any, res: any) => {
-  res.writeHead(200, { "Content-Type": "text/plain" });
-  res.end("WebSocket server running");
-};
-const server = http.createServer(app);
-const wss = new WebSocketServer({ server });
+const PORT: number = Number(process.env.PORT) || 8765;
+const INDEX: string = "/index.html";
 
-const result = { type: "setup", id: "00000110", role: "canvas" };
+const server = express()
+  .use((req, res) => res.sendFile(INDEX, { root: __dirname }))
+  .listen(PORT, () => console.log(`Listening on ${PORT}`));
+
+const wss = new Server({ server });
 
 wss.on("connection", (ws) => {
   console.log("Client connected");
+  ws.on("close", () => console.log("Client disconnected"));
+});
 
-  ws.on("message", (message) => {
-    console.log(`Received: ${message}`);
-    ws.send(JSON.stringify({ message: "Hello from server" }));
+setInterval(() => {
+  wss.clients.forEach((client) => {
+    client.send(new Date().toTimeString());
   });
-});
-
-const PORT = 8765;
-server.listen(PORT, () => {
-  console.log(`Server started on http://localhost:${PORT}`);
-});
+}, 1000);
