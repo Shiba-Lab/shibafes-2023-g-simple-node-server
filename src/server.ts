@@ -2,7 +2,7 @@ import express from "express";
 import { Server } from "ws";
 import path from "path";
 
-const PORT: number = Number(process.env.PORT) || 8765;
+const PORT: number = 8765;
 const INDEX: string = "/index.html";
 
 const server = express()
