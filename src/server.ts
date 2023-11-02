@@ -87,6 +87,6 @@ wss.on("connection", (ws) => {
         client = { ...client, ...json, state: "QRscanned", startTime: time };
         break;
     }
-    ws.send(JSON.stringify({ message: "Hello from server" }));
+    // ws.send(JSON.stringify({ message: "Hello from server" }));
   });
 });
