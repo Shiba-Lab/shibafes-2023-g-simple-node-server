@@ -7,6 +7,7 @@ const PORT: number = Number(process.env.PORT) || 8765;
 const INDEX: string = "/index.html";
 
 const clients: Client[] = [];
+let projector: Client | undefined = undefined;
 
 const server = express()
   .use((req, res) => res.sendFile(INDEX, { root: __dirname }))
@@ -58,7 +59,6 @@ wss.on("connection", (ws) => {
       console.error("Unknown client.");
       return;
     }
-
     //
     // json.typeによって分岐
     // 
@@ -68,11 +68,22 @@ wss.on("connection", (ws) => {
         // role を設定する想定です
         client = { ...client, ...json };
         console.log(client);
+        if (json.role === "projector") {
+          projector = client;
+          console.log(json.uuid);
+        }
+        break;
+
+      case "sendFlowerData":
+        // 花を設定する
+        client = { ...client, ...json };
+        console.log(client);
+        // ws.send(JSON.stringify({ type: "sendFlowerData", ...json }));
         break;
 
       case "onQRscan":
         // 宛先を探す
-        const target = clients.find((c) => c.uuid === json.value);
+        const target: Client | undefined = clients.find((c) => c.uuid === json.value);
 
         if (!target) {
           console.error("Unknown target.");
@@ -81,41 +92,32 @@ wss.on("connection", (ws) => {
           );
           break;
         }
+
+        if (!projector) {
+          console.error("Projector not found.");
+          ws.send(
+            JSON.stringify({ type: "onQRscan", error: "Projector not found." })
+          );
+          break;
+        }
+
         // 時刻を決定
         const now = new Date().getTime();
         const lag = 2000;
         const time = Math.ceil((now + lag) / 1000) * 1000;
 
-        // TODO: Next たちに送信
+        target.ws.send(JSON.stringify({ 
+          type: "prePlay",
+          uuid: target.uuid, 
+          startTime: time 
+        }));
 
-      // case "sendFlowerData":
-      //   client = { ...client, ...json, state: "waiting" };
-      //   ws.send(JSON.stringify({ type: "sendFlowerData", ...json }));
-      //   break;
-        // 送信
-        // QR loaderに送り返す
-        // ws.send(
-        //   JSON.stringify({
-        //     ...json,
-        //     type: "onQRscan",
-        //     value: target.uuid,
-        //     startTime: time,
-        //   })
-        // );
-        // canvasとSPに送る
-        // clients.forEach((c) => {
-        //   if (c.uuid === json.value || c.role === "main_canvas") {
-        //     c.ws.send(
-        //       JSON.stringify({
-        //         ...json,
-        //         type: "onQRscan",
-        //         value: target.uuid,
-        //         startTime: time,
-        //       })
-        //     );
-        //   }
-        // });
-        // client = { ...client, ...json, state: "QRscanned", startTime: time };
+        projector.ws.send(JSON.stringify({ 
+          type: "prePlay",
+          uuid: target.uuid, 
+          startTime: time 
+        }));
+
         break;
     }
     // ws.send(JSON.stringify({ message: "Hello from server" }));
