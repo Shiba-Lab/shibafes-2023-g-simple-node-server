@@ -53,6 +53,10 @@ wss.on("connection", (ws) => {
   // なんか受信した時
   //
   ws.on("message", (message: string) => {
+    console.log("Connecting: ");
+    clients.forEach(element => {
+      console.log(element.uuid);
+    });
     console.log(`Received: ${message}`);
     const json = JSON.parse(message);
 
@@ -115,7 +119,7 @@ wss.on("connection", (ws) => {
         const now = new Date().getTime();
         const lag = 2000;
         const time = Math.ceil((now + lag) / 1000) * 1000;
-        console.log(target);
+        // console.log(target);
 
         // console.log("Num: " + client?.flowerCount);
         target.ws.send(JSON.stringify({ 
