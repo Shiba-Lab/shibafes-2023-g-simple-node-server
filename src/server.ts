@@ -7,7 +7,7 @@ const PORT: number = Number(process.env.PORT) || 8765;
 const INDEX: string = "/index.html";
 
 const clients: Client[] = [];
-let projector: Client | undefined = undefined;
+let projector_idx: number = 0;
 
 const server = express()
   .use((req, res) => res.sendFile(INDEX, { root: __dirname }))
@@ -24,6 +24,10 @@ wss.on("connection", (ws) => {
     uuid: crypto.randomUUID(),
     role: undefined,
     ws,
+    flowerText: "",
+    flowerCount: 0,
+    flowerSizeRange: [],
+    flowerColor: []
   };
   clients.push(client);
 
@@ -53,9 +57,9 @@ wss.on("connection", (ws) => {
     const json = JSON.parse(message);
 
     // c と同じuuidを持つクライアントを探す
-    let client = clients.find((c) => c.uuid === json.uuid);
+    let client_idx = clients.findIndex((c) => c.uuid === json.uuid);
     
-    if (!client) {
+    if (!clients[client_idx]) {
       console.error("Unknown client.");
       return;
     }
@@ -66,18 +70,24 @@ wss.on("connection", (ws) => {
 
       case "initConnection":
         // role を設定する想定です
-        client = { ...client, ...json };
-        console.log(client);
+        clients[client_idx] = { ...clients[client_idx], ...json };
         if (json.role === "projector") {
-          projector = client;
+          projector_idx = client_idx;
           console.log(json.uuid);
         }
         break;
 
       case "sendFlowerData":
         // 花を設定する
-        client = { ...client, ...json };
-        console.log(client);
+        console.log("sendFlowerData");
+        // console.log(client);
+        clients[client_idx] = {
+          ...clients[client_idx],
+          ...json
+        };
+        // OK
+        // console.log(clients[client_idx]);
+        // console.log(client);
         // ws.send(JSON.stringify({ type: "sendFlowerData", ...json }));
         break;
 
@@ -93,7 +103,7 @@ wss.on("connection", (ws) => {
           break;
         }
 
-        if (!projector) {
+        if (!clients[projector_idx]) {
           console.error("Projector not found.");
           ws.send(
             JSON.stringify({ type: "onQRscan", error: "Projector not found." })
@@ -105,17 +115,27 @@ wss.on("connection", (ws) => {
         const now = new Date().getTime();
         const lag = 2000;
         const time = Math.ceil((now + lag) / 1000) * 1000;
+        console.log(target);
 
+        // console.log("Num: " + client?.flowerCount);
         target.ws.send(JSON.stringify({ 
           type: "prePlay",
           uuid: target.uuid, 
-          startTime: time 
+          startTime: time,
+          flowerText: target.flowerText,
+          flowerCount: target.flowerCount,
+          flowerSizeRange: target.flowerSizeRange,
+          flowerColor: target.flowerColor,
         }));
 
-        projector.ws.send(JSON.stringify({ 
+        clients[projector_idx].ws.send(JSON.stringify({ 
           type: "prePlay",
           uuid: target.uuid, 
-          startTime: time 
+          startTime: time,
+          flowerText: target.flowerText,
+          flowerCount: target.flowerCount,
+          flowerSizeRange: target.flowerSizeRange,
+          flowerColor: target.flowerColor,
         }));
 
         break;
