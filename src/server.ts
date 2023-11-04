@@ -44,7 +44,7 @@ wss.on("connection", (ws) => {
   ws.on("close", () => {
     console.log("Client disconnected");
     // クライアント削除
-    clients.splice(clients.indexOf(client), 1);
+    // clients.splice(clients.indexOf(client), 1);
   });
 
 
